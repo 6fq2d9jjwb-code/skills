@@ -10,7 +10,7 @@ A construction skill for React Native. It turns a request for motion into an imp
 Mobile changes three things about animation, and everything in this skill follows from them:
 
 1. **There is no hover.** Every affordance the web puts in hover has to live in press, position, or nothing.
-2. **There are two threads.** An animation that touches the JS thread stutters the moment the app does anything else. The whole craft is keeping motion off it.
+2. **There are two runtimes.** Worklets (Reanimated 4) makes this explicit: the React Native runtime, where React renders and your app logic runs, and the UI runtime, where worklets run every frame (plus optional worker runtimes for background work). An animation that touches the RN runtime stutters the moment the app does anything else. The whole craft is keeping motion on the UI runtime.
 3. **The user's finger is on the element.** Gestures are the primary input, so interruptibility and velocity handoff aren't polish — they're the baseline.
 
 ## Operating Posture
@@ -63,9 +63,27 @@ Walk down; stop at the first that fits.
 | Anything a finger touches, or anything derived from scroll | **`useSharedValue` + `Gesture` + `useAnimatedStyle`** |
 | Screen to screen | **Native stack options in Expo Router.** Never hand-roll this |
 | A bottom sheet that is its own screen | **`presentation: 'formSheet'`** — it's a real UISheetPresentationController, free and correct |
+| Tab bar | **`NativeTabs`** (Expo Router) — the platform's real tab bar, its behaviors and transitions included |
+| Context menu, press-and-hold preview | **`Link.Menu` / `Link.Preview`** (Expo Router) — native menus and peek, never rebuilt in JS |
+| Header that collapses into a large title | **`headerLargeTitle`** on the native stack — not a scroll worklet |
+| Pull to refresh | **`RefreshControl`** — hand-roll only when it's a signature interaction (see the threshold recipe) |
+| UI that tracks the keyboard | **`react-native-keyboard-controller`** — the keyboard's real position, frame by frame, on the UI thread |
 | Vector illustration, celebration, empty state | **Lottie** — for illustration only, never for UI state |
+| A huge animated scene, freeform drawing | **`@shopify/react-native-skia`** — a canvas, for when the view hierarchy itself is the bottleneck |
 
 Reach for a shared value only when the value is continuous or interruptible. A press scale is a CSS transition; a drag is a shared value. Using a worklet for a two-state toggle is the mobile equivalent of installing a motion library for a fade.
+
+**Dependencies.** Install with `npx expo install <package>` — it resolves the version that matches the project's SDK, which plain `npm install` won't:
+
+| Need | Package |
+| --- | --- |
+| Animation | `react-native-reanimated` + `react-native-worklets` |
+| Gestures | `react-native-gesture-handler` |
+| Navigation, sheets, native tabs, menus | `expo-router` |
+| Haptics | `expo-haptics` |
+| Keyboard-following UI | `react-native-keyboard-controller` |
+| Illustration, celebration | `lottie-react-native` |
+| Very large animated scenes, custom drawing | `@shopify/react-native-skia` |
 
 ### 4. Pick the properties
 
@@ -127,8 +145,9 @@ Mobile UI animations stay under 300ms, same as web. The platform's own transitio
 This is the mobile-specific craft, and it's where most React Native motion dies.
 
 - **Never `setState` from a gesture or scroll handler.** One React render per frame is the single biggest cause of jank in RN apps. Shared value → `useAnimatedStyle`, and React never re-renders at all.
-- **Never `runOnJS` inside `onUpdate` or a scroll handler.** It schedules a JS-thread call 60–120× per second. `runOnJS` belongs in `onEnd`, or in a `useAnimatedReaction` that fires when a value crosses a threshold.
-- **Never read a shared value during render** (`translateY.value` in JSX). It's a snapshot that never updates and it silently desyncs.
+- **Never schedule back to the RN runtime inside `onUpdate` or a scroll handler.** `scheduleOnRN(fn, ...args)` from `react-native-worklets` — the Reanimated 4 replacement for the deprecated `runOnJS(fn)(...args)` — queues an RN-runtime call, and in `onUpdate` that's 60–120× per second. It belongs in `onEnd`, or in a `useAnimatedReaction` that fires when a value crosses a threshold.
+- **Never read a shared value during render** (`translateY.get()` in JSX). It's a snapshot that never updates and it silently desyncs. **Never write one during render either** — it fires mid-reconciliation, and a re-render you didn't cause replays the write. Touch shared values only in worklets, handlers, and effects.
+- **Use `.get()` / `.set()`, not `.value`.** Same API, but direct `.value` access is the form the React Compiler can't see through — the Reanimated docs call `get`/`set` the compiler-safe way. `set` also takes a functional update: `sv.set((v) => v + 1)`.
 - **Functions called from a worklet need `'worklet'`** as their first line, or they throw at runtime on device while working fine in the debugger.
 
 ### 7. Press, not hover
@@ -158,7 +177,7 @@ Three rules, and they're absolute:
 - **One per user action.** Never on scroll, never per frame, never on an entrance animation the user didn't cause.
 - **Never the only feedback.** Haptics are off system-wide for many users, and silent on most Android hardware. The visual has to stand alone.
 
-From a worklet, haptics must be wrapped: `runOnJS(Haptics.selectionAsync)()`.
+From a worklet, haptics must be scheduled back to the RN runtime: `scheduleOnRN(Haptics.selectionAsync)`.
 
 ### 9. Reduced motion and accessibility
 
@@ -180,8 +199,8 @@ Reduced motion means **fewer and gentler**, not zero: keep opacity and color cha
 
 Check these first when "the animation just doesn't run":
 
+- Install through Expo so versions match the SDK: `npx expo install react-native-reanimated react-native-worklets`. In an Expo project, `babel-preset-expo` configures the worklets Babel plugin automatically — no `babel.config.js` step. Only a bare RN project without that preset adds the plugin manually, and there it must be last in the list or every worklet silently falls back to the JS thread.
 - `GestureHandlerRootView` must wrap the app, or gestures do nothing with no error.
-- The worklets Babel plugin must be last in `babel.config.js`, or every worklet falls back to the JS thread.
 - Reanimated 4 requires the New Architecture.
 - **Expo Go is not a performance environment.** Judge feel in a release build; a dev build's JS thread is slow enough to hide exactly the problems you're looking for.
 
@@ -205,7 +224,9 @@ For ready-to-build implementations — press feedback, drag-to-dismiss sheet, sw
 | --- | --- |
 | `PanResponder` | `Gesture.Pan()` from gesture-handler |
 | `setState` in a gesture or scroll handler | shared value + `useAnimatedStyle` |
-| `runOnJS` per frame | `onEnd`, or `useAnimatedReaction` at a threshold |
+| `runOnJS` (deprecated in Reanimated 4) | `scheduleOnRN` from `react-native-worklets` |
+| `scheduleOnRN` per frame | `onEnd`, or `useAnimatedReaction` at a threshold |
+| Reading or writing a shared value during render | `.get()` / `.set()` in worklets, handlers, effects |
 | Core `Animated` for anything a finger touches | Reanimated |
 | Animating `height` / `width` / `margin` / `flex` / `top` | `transform` + `opacity` (absolute, childless elements exempt) |
 | Animating `BlurView` intensity or Android `elevation` | crossfade a static layer |
