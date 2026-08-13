@@ -174,12 +174,16 @@ const backdropStyle = useAnimatedStyle(() => ({
 
 ## Swipe to delete a row
 
+Before writing this: gesture-handler ships [`ReanimatedSwipeable`](https://docs.swmansion.com/react-native-gesture-handler/docs/components/reanimated_swipeable/), which already does swipe-to-reveal actions — thresholds, overshoot, open/close methods — on the UI thread. Reach for it when the row reveals action buttons. Build the gesture yourself only when the interaction is different in kind: swipe-to-commit with momentum projection, like this one.
+
 ```jsx
 const x = useSharedValue(0);
+const context = useSharedValue(0);
 
 const pan = useMemo(() => Gesture.Pan()
   .activeOffsetX([-10, 10])   // must declare the axis, or it fights the vertical scroll
-  .onUpdate((e) => { x.set(Math.min(0, e.translationX)); })
+  .onStart(() => { context.set(x.get()); })   // grab mid-spring continues from where the row is, not from 0
+  .onUpdate((e) => { x.set(Math.min(0, context.get() + e.translationX)); })
   .onEnd((e) => {
     const projected = x.get() + project(e.velocityX);
     if (projected < -SWIPE_THRESHOLD) {
@@ -227,12 +231,15 @@ const titleStyle = useAnimatedStyle(() => ({
 ## List entrances
 
 ```jsx
-// Module scope. The Reanimated docs recommend building layout animations outside
-// components (or in useMemo) — an inline chain in JSX rebuilds on every render.
-const itemEnter = (i) => FadeInDown.duration(250).delay(i * 40);
+// The Reanimated docs recommend building layout animations outside components,
+// or in useMemo — an inline chain in JSX rebuilds the builder on every render.
+// A per-index delay can't live at module scope, so the row memoizes its own:
+function Row({ item, index }) {
+  const entering = useMemo(() => FadeInDown.duration(250).delay(index * 40), [index]);
+  return <Animated.View entering={entering}>{/* ... */}</Animated.View>;
+}
 
-{items.map((item, i) => (
-  <Animated.View key={item.id} entering={itemEnter(i)}>
+{items.map((item, i) => <Row key={item.id} item={item} index={i} />)}
 ```
 
 Stagger 30–80ms. Longer feels slow, shorter reads as simultaneous.
@@ -244,6 +251,21 @@ Entrance animations are for content the user asked for and is waiting on. A list
 ---
 
 ## Keyboard-synced UI
+
+Needs its own module and a one-time provider ([Expo keyboard guide](https://docs.expo.dev/guides/keyboard-handling/)):
+
+```bash
+npx expo install react-native-keyboard-controller
+```
+
+```jsx
+import { KeyboardProvider } from 'react-native-keyboard-controller';
+
+// Root _layout, next to GestureHandlerRootView — hooks below do nothing without it.
+<KeyboardProvider>
+  <Stack />
+</KeyboardProvider>
+```
 
 ```jsx
 import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';

@@ -63,9 +63,9 @@ Walk down; stop at the first that fits.
 | Anything a finger touches, or anything derived from scroll | **`useSharedValue` + `Gesture` + `useAnimatedStyle`** |
 | Screen to screen | **Native stack options in Expo Router.** Never hand-roll this |
 | A bottom sheet that is its own screen | **`presentation: 'formSheet'`** — it's a real UISheetPresentationController, free and correct |
-| Tab bar | **`NativeTabs`** (Expo Router) — the platform's real tab bar, its behaviors and transitions included |
-| Context menu, press-and-hold preview | **`Link.Menu` / `Link.Preview`** (Expo Router) — native menus and peek, never rebuilt in JS |
-| Header that collapses into a large title | **`headerLargeTitle`** on the native stack — not a scroll worklet |
+| Tab bar | **`NativeTabs`** (from `expo-router/unstable-native-tabs`) — the platform's real tab bar, its behaviors and transitions included |
+| Context menu, press-and-hold preview | **`Link.Menu` / `Link.Preview`** (Expo Router, iOS-only) — native menus and peek, never rebuilt in JS |
+| Header that collapses into a large title | **`headerLargeTitleEnabled`** on the native stack (iOS-only; `headerLargeTitle` is deprecated) — not a scroll worklet |
 | Pull to refresh | **`RefreshControl`** — hand-roll only when it's a signature interaction (see the threshold recipe) |
 | UI that tracks the keyboard | **`react-native-keyboard-controller`** — the keyboard's real position, frame by frame, on the UI thread |
 | Vector illustration, celebration, empty state | **Lottie** — for illustration only, never for UI state |
@@ -81,7 +81,7 @@ Reach for a shared value only when the value is continuous or interruptible. A p
 | Gestures | `react-native-gesture-handler` |
 | Navigation, sheets, native tabs, menus | `expo-router` |
 | Haptics | `expo-haptics` |
-| Keyboard-following UI | `react-native-keyboard-controller` |
+| Keyboard-following UI | `react-native-keyboard-controller` (needs `KeyboardProvider` at the root — see the keyboard recipe) |
 | Illustration, celebration | `lottie-react-native` |
 | Very large animated scenes, custom drawing | `@shopify/react-native-skia` |
 
@@ -199,7 +199,7 @@ Reduced motion means **fewer and gentler**, not zero: keep opacity and color cha
 
 Check these first when "the animation just doesn't run":
 
-- Install through Expo so versions match the SDK: `npx expo install react-native-reanimated react-native-worklets`. In an Expo project, `babel-preset-expo` configures the worklets Babel plugin automatically — no `babel.config.js` step. Only a bare RN project without that preset adds the plugin manually, and there it must be last in the list or every worklet silently falls back to the JS thread.
+- Install through Expo so versions match the SDK: `npx expo install react-native-reanimated react-native-worklets`. In an Expo project, `babel-preset-expo` configures the worklets Babel plugin automatically — no `babel.config.js` step. Only a bare RN project without that preset adds the plugin manually, and there it must be last in the list. A missing or misplaced plugin doesn't silently fall back anymore — it throws `Failed to create a worklet` at runtime.
 - `GestureHandlerRootView` must wrap the app, or gestures do nothing with no error.
 - Reanimated 4 requires the New Architecture.
 - **Expo Go is not a performance environment.** Judge feel in a release build; a dev build's JS thread is slow enough to hide exactly the problems you're looking for.
