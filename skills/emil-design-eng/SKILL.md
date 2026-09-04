@@ -13,12 +13,12 @@ This is the philosophy file. The precise rules it rests on — the frequency gat
 
 | Ask | Skill |
 | --- | --- |
-| Build one animation with the right curve, duration and properties | `animate` (web) / `animate-expo` (React Native) |
+| Build one animation with the right curve, duration and properties | `animate`; for React Native, `animate-expo` when it is installed |
 | Review a diff's motion | `review-animations` |
 | Audit a codebase's motion and get executable plans | `improve-animations` |
 | Find what should animate but doesn't | `find-animation-opportunities` |
 | Name an effect the user can only describe | `animation-vocabulary` |
-| Choose a library instead of hand-rolling a component | `pick-ui-library` |
+| Choose a library instead of hand-rolling a component | `pick-ui-library` when it is installed; otherwise pick a maintained library yourself and say why |
 | Explore several directions for one piece of UI | `prototype` |
 | Gesture physics, springs, materials and typography the Apple way | `apple-design` |
 

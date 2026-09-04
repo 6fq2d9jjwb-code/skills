@@ -47,7 +47,7 @@ Walk down; stop at the first that fits.
 | A spring feel with no JS at all | **CSS `linear()` easing** holding a sampled spring curve (see Springs) |
 | Springs driven by gestures, layout animations, exit animations, interruptible values | **Motion** ([motion.dev](https://motion.dev); React import `motion/react`) |
 
-If the task needs a *component* rather than an animation (a toast, a drawer, a command menu, a dropdown) pick a library (`pick-ui-library`) instead of hand-rolling one. A `<div>` dropdown with no focus management is how that ends.
+If the task needs a *component* rather than an animation (a toast, a drawer, a command menu, a dropdown), pick a maintained library instead of hand-rolling one; the `pick-ui-library` skill does that when it is installed, otherwise choose one yourself and say why. A `<div>` dropdown with no focus management is how hand-rolling ends.
 <!-- /section: tools -->
 
 ## Properties

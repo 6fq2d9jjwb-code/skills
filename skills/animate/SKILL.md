@@ -5,7 +5,7 @@ description: Build an animation from scratch, making the decisions in the order 
 
 # Building Animations
 
-A construction skill. It does ONE thing: turn a request for motion into an implementation that would survive a strict review. It does not audit a codebase (that's `improve-animations`), critique a diff (that's `review-animations`), hunt for places that could animate (that's `find-animation-opportunities`), or build for React Native (that's `animate-expo`).
+A construction skill. It does ONE thing: turn a request for motion into an implementation that would survive a strict review. It does not audit a codebase (that's `improve-animations`), critique a diff (that's `review-animations`), hunt for places that could animate (that's `find-animation-opportunities`), or build for React Native (`animate-expo` covers that where it is installed).
 
 The tables below are included from the shared standards. The full catalog, with springs, gestures, clip-path, performance, accessibility and debugging, is [STANDARDS.md](STANDARDS.md); load it when a step needs a value that isn't inlined here.
 
@@ -78,7 +78,7 @@ Walk down; stop at the first that fits.
 | A spring feel with no JS at all | **CSS `linear()` easing** holding a sampled spring curve (see Springs) |
 | Springs driven by gestures, layout animations, exit animations, interruptible values | **Motion** ([motion.dev](https://motion.dev); React import `motion/react`) |
 
-If the task needs a *component* rather than an animation (a toast, a drawer, a command menu, a dropdown) pick a library (`pick-ui-library`) instead of hand-rolling one. A `<div>` dropdown with no focus management is how that ends.
+If the task needs a *component* rather than an animation (a toast, a drawer, a command menu, a dropdown), pick a maintained library instead of hand-rolling one; the `pick-ui-library` skill does that when it is installed, otherwise choose one yourself and say why. A `<div>` dropdown with no focus management is how hand-rolling ends.
 <!-- /include: tools -->
 
 ### 4. Pick the properties

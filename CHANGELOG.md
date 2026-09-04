@@ -35,3 +35,7 @@ All changes relative to upstream `emilkowalski/skills` at d23d7f8 (2026-08-21). 
 - **animation-vocabulary**: every glossary term carries Chinese lookup keys; the description and instructions accept Chinese descriptions and answer with the English term first.
 - **prototype**: before naming directions, ask the person for imagery, color, temperament and taboos (or state the assumptions if nobody is available); variants must respect the taboos.
 - **pick-ui-library**: check that a package is still maintained before installing it; the list's curation date is stated.
+
+## Notes
+
+- Cross-references to `animate-expo` and `pick-ui-library` are phrased as "when it is installed", so any subset of the skills can be installed without a routing row pointing at a skill that isn't there.
