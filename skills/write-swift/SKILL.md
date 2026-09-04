@@ -7,7 +7,7 @@ description: How to write modern Swift well — modeling with value types, Swift
 
 How to write Swift the way the language wants to be written, current through Swift 6.4.
 
-**Toolchain baseline: Swift 6.3** (current release as of August 2026). Everything here compiles on 6.3 unless marked ⚠, which flags unreleased Swift 6.4 features. Concurrency guidance assumes the Swift 6.2 model — if the project is on 6.1 or earlier, §3's rules about `async` and `@concurrent` do not apply.
+**Detect the toolchain before you write.** Run `swift --version` (or read `swift-tools-version` in `Package.swift`, or the project's Xcode version) and keep the number in mind. Everything here compiles on Swift 6.3; rows and notes marked ⚠ need **Swift 6.4 or later**, so on an older toolchain use the older form they replace. §3's rules about `async` and `@concurrent` hold only when the project has **Approachable Concurrency** enabled (a Swift 6.2+ build setting); on 6.1 or earlier, or with the setting off, they do not apply and `nonisolated async` still hops to the concurrent pool.
 
 The through-line: **Swift is a progressive-disclosure language. Start with the simplest, most static, most single-threaded thing that works, and buy dynamism — concurrency, reference semantics, existentials, unsafe pointers — only where you can point at the reason.** Every rule below is an application of that.
 
@@ -83,7 +83,7 @@ Start every app entirely on the main thread. Single-threaded code goes a long wa
 
 ### The rule that changed
 
-**In Swift 6.2, marking a function `async` does _not_ move it off the current actor.** It runs where it was called from. This is what makes "the most natural code to write" data-race free by default.
+**With Approachable Concurrency on, marking a function `async` does _not_ move it off the current actor.** It runs where it was called from. This is what makes "the most natural code to write" data-race free by default. The behavior comes from the `NonisolatedNonsendingByDefault` upcoming feature (SE-0461), which Approachable Concurrency enables; it is a build setting, not a compiler version. Without it, a `nonisolated async` function still switches to the concurrent thread pool and `@concurrent` is not available, so check the setting before relying on anything in this section.
 
 - **`@concurrent`** — always switches to the concurrent thread pool. Use it on _your_ CPU-heavy work.
 - **`nonisolated`** — runs wherever it's called from. **This is the right default for library APIs**, because the caller decides. `nonisolated` on a type makes all its members nonisolated (Swift 6.1+).
@@ -157,7 +157,7 @@ Structured tasks (`async let`, task groups) are scoped like local variables: the
 
 **Task-local values** (`@TaskLocal`) propagate context — a request ID, a trace span — down the task tree without threading a parameter through every signature. Make them optional so unbound reads have a sensible default.
 
-**Bridging callbacks:** `withCheckedContinuation` / `withCheckedThrowingContinuation`. The contract is **resume exactly once on every path** — never resuming hangs the caller forever; resuming twice is a fatal error. For delegate APIs that fire later, store the continuation and nil it out when you resume. (Swift 6.4 — unreleased — adds a `Continuation` type that checks single-resumption at compile time.)
+**Bridging callbacks:** `withCheckedContinuation` / `withCheckedThrowingContinuation`. The contract is **resume exactly once on every path** — never resuming hangs the caller forever; resuming twice is a fatal error. For delegate APIs that fire later, store the continuation and nil it out when you resume. (⚠ Swift 6.4+ adds a `Continuation` type that checks single-resumption at compile time.)
 
 **`AsyncSequence`:** iterate with `for await` / `for try await`. Adapt an existing handler- or delegate-based API with `AsyncStream` / `AsyncThrowingStream` — construct the source inside the closure, `yield` from the handler, and clean up in `onTermination`.
 
@@ -241,7 +241,7 @@ Low-level Swift performance is dominated by four costs. Know which one you're pa
 - **`Span` / `RawSpan` / `OutputSpan`** (Swift 6.2) replace `withUnsafeBufferPointer` for direct access to contiguous storage. They're non-escapable, so the compiler ties their lifetime to the container — you get pointer performance with no lifetime bugs, and the retains/releases disappear.
 - **Moving stored properties out of a nested class into the parent struct** removes runtime exclusivity checks.
 - Shipped in Swift 6.3, when you've measured the need: `@inline(always)` (pair with `final` on methods) and `@specialized(where T == ...)` (SE-0460) to pre-specialize a generic for hot concrete types.
-- Landing in Swift 6.4 (**unreleased** — see the note below §15): `borrow`/`mutate` accessors instead of `get`/`set` for large stored values, `UniqueArray`/`UniqueBox`, and `Ref`/`MutableRef` to hoist a repeated lookup out of a loop.
+- ⚠ Swift 6.4+ (see the note in §15): `borrow`/`mutate` accessors instead of `get`/`set` for large stored values, `UniqueArray`/`UniqueBox`, and `Ref`/`MutableRef` to hoist a repeated lookup out of a loop.
 
 **Async functions** keep their state on a per-task slab allocator rather than the C stack, and split into partial functions at each suspension point. The cost profile is similar to sync functions with slightly higher call overhead — which is another reason not to make something `async` that has nothing to await.
 
@@ -306,7 +306,7 @@ Reach for a macro when you're writing code the compiler could derive — and onl
 - **"Unsafe" means the API cannot fully validate its input, so violating its preconditions is undefined behavior** — not that it crashes. Safe APIs _do_ trap deliberately; a clean fatal error is the safe outcome.
 - **Prefer `Span` over `Unsafe*Pointer`.** Since Swift 6.2 there is a safe, non-escaping, equally fast way to get at contiguous storage. Reserve raw pointers for C interop.
 - If you must use pointers: keep the unsafe region as small as possible, use **buffer** pointers (address + count) rather than bare pointers so bounds are tracked, never let a pointer escape the closure that vends it, and run the **Address Sanitizer**.
-- Enable **strict memory safety** in security-critical modules — it forces every unsafe use to be acknowledged in source, which is what makes an audit possible. Swift 6.4's `@diagnose` attribute (unreleased) lets you turn it on for individual functions.
+- Enable **strict memory safety** in security-critical modules — it forces every unsafe use to be acknowledged in source, which is what makes an audit possible. ⚠ Swift 6.4's `@diagnose` attribute lets you turn it on for individual functions.
 - **Interop is bidirectional and incremental.** C, Objective-C, and C++ types map into Swift directly (including C++ value semantics, containers as Swift collections, and move-only types as `~Copyable`). Swift 6.3's `@c` attribute exposes Swift functions back to C (with `@implementation` when the declaration already exists in a header). Adopt Swift one file at a time; don't rewrite.
 
 ---
@@ -315,7 +315,7 @@ Reach for a macro when you're writing code the compiler could derive — and onl
 
 Agents routinely write the older, longer form of all of these.
 
-**Rows marked ⚠ are Swift 6.4, which has not shipped.** The current release is 6.3.x. Their proposals are accepted and implemented in main, so they are safe to plan around and unsafe to write today — check the project's toolchain before using one, and prefer the older form if it targets 6.3 or earlier.
+**Rows marked ⚠ need Swift 6.4 or later.** Check the project's toolchain (`swift --version`) before using one; if it targets 6.3 or earlier, write the older form in the left column. Once the toolchain is 6.4+, the right column is the form to write.
 
 | Instead of                                                            | Write                                                                                                    | Since |
 | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----- |
