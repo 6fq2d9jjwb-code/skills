@@ -165,6 +165,15 @@ When toasts stack and the list reflows, the opacity change has to work against t
 
 Keep it short — this is one of the few animations that costs layout on every frame, so a long duration is expensive as well as sluggish. Measure the content height in JS (or use a headless primitive that supplies it) rather than animating to `auto`.
 
+Progressive enhancement: where `interpolate-size` is supported (Chrome 129+; a browser without it just snaps open, which is the same as no animation), `height: auto` becomes transitionable and the measuring code goes away:
+
+```css
+:root { interpolate-size: allow-keywords; }
+
+.content { height: 0; overflow: hidden; transition: height 200ms var(--ease-out); }
+.content[data-open] { height: auto; }
+```
+
 ---
 
 ## Stagger a group entrance
@@ -252,6 +261,19 @@ Marketing surfaces only. Don't do this to functional UI a user visits daily.
 
 Trigger with `IntersectionObserver`, or Motion's `useInView` with `{ once: true, margin: "-100px" }`. Fire it once — re-animating on every scroll-by is an interface fighting its reader.
 
+That is also why a CSS scroll-driven animation (`animation-timeline: view()`) is the wrong tool for a reveal: it is bound to scroll position, so it plays backwards when the reader scrolls up. Use scroll-driven animations for motion that *should* track the scroll in both directions — a reading-progress bar, a header that shrinks, parallax on a marketing page — and keep them off the main thread by animating `transform` / `opacity` / `clip-path`:
+
+```css
+@supports (animation-timeline: scroll()) {
+  .progress {
+    transform-origin: left;
+    animation: grow linear both;
+    animation-timeline: scroll(root);   /* progress = how far the document has scrolled */
+  }
+  @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+}
+```
+
 ---
 
 ## Drag to dismiss
@@ -286,6 +308,53 @@ Settle with a spring so an interrupted drag keeps its velocity:
 ```js
 { type: "spring", duration: 0.5, bounce: 0.2 }
 ```
+
+---
+
+## Same-document view transition
+
+For a state change where two DOM snapshots should morph — reordering a list, expanding a card into a panel, swapping a route's content — let the browser animate between the old and new DOM instead of choreographing both states by hand.
+
+```js
+function update() { /* mutate the DOM synchronously */ }
+
+if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  update();                              // unsupported, or reduced motion: just change state
+} else {
+  document.startViewTransition(update);
+}
+```
+
+```css
+.card { view-transition-name: card-42; }   /* unique per element; the browser morphs matching names */
+
+::view-transition-group(*) {
+  animation-duration: 250ms;
+  animation-timing-function: var(--ease-in-out);   /* elements are moving on screen, not entering */
+}
+::view-transition-old(root),
+::view-transition-new(root) { animation-duration: 200ms; }
+```
+
+- Only elements with a `view-transition-name` travel between their old and new box; everything else crossfades. Name what the eye should follow, nothing more.
+- The browser's defaults are 250ms crossfades; keep the group animations inside the UI budget.
+- Cross-document transitions (`@view-transition { navigation: auto; }` on both pages) follow the same rules on multi-page sites.
+- Reduced motion: skip the transition entirely (above), or set `animation: none` on the pseudo-elements.
+
+---
+
+## Spring feel without a library
+
+A transition whose easing is a sampled spring curve in `linear()`. Same settle as a spring, zero bundle cost, and it retargets from the current value like any transition. Use it for state-driven motion that should feel alive — a toggle knob, a chip snapping into place, a card settling after a hover. Keep real springs for anything the finger drives, because `linear()` cannot carry the release velocity.
+
+```css
+.knob {
+  transition: transform 500ms var(--spring-settle);   /* the curve tokens are in STANDARDS.md under Springs */
+}
+.switch[data-on] .knob { transform: translateX(20px); }
+```
+
+Both tokens are sampled over 500ms. Keep the duration at 500ms or scale it with the curve in mind: a shorter duration with the same curve plays the same spring faster.
 
 ---
 
