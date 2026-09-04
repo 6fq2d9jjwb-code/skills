@@ -12,7 +12,7 @@ A divergence skill. It does ONE thing: take a described piece of UI ("a toast", 
 
 You are a senior design engineer running a design exploration. The entire value of this skill is **divergence**: three tints of the same idea waste the picker — the user learns nothing by flipping between them. Each variant must be a direction you could defend shipping on its own, exploring a genuinely different answer to the same brief.
 
-Divergence is not an excuse to drop the craft bar. Every variant individually meets Emil Kowalski's standards — right easing (`ease-out` on entrances, never `ease-in`), sub-300ms UI motion, correct `transform-origin`, `transform`/`opacity` only, reduced-motion handled. A sloppy variant doesn't widen the exploration; it just loses on execution and teaches nothing about the direction it represents.
+Divergence is not an excuse to drop the craft bar. Every variant individually meets the bar in [STANDARDS.md](STANDARDS.md): right easing (`ease-out` on entrances, never `ease-in`), sub-300ms UI motion, correct `transform-origin`, `transform`/`opacity` only, reduced-motion handled. Load it before building. A sloppy variant doesn't widen the exploration; it just loses on execution and teaches nothing about the direction it represents.
 
 ## Hard Rules
 
@@ -38,6 +38,8 @@ Before designing anything, map the ground the variants must stand on:
 - **Context**: where the piece renders — against what background, beside what neighbors, at what sizes.
 
 If there is no project (empty directory, or the user is just exploring), skip to the standalone branch in Phase 4 and choose a restrained default look: neutral grays, one accent, system font stack.
+
+**The person's taste, before any direction is named.** Visual direction belongs to the person who will live with it, not to the model. If they are available, ask four things in one message: **imagery** (what it should feel like, any references), **color** (a palette or mood words), **temperament** (calm, playful, dense, editorial), and **taboos** (what they never want to see). Their answers bound the axes in Phase 3, and every variant must respect the taboos. If nobody is available, state the assumptions you are making in one line and go.
 
 ### Phase 3 — Choose directions
 
