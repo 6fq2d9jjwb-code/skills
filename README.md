@@ -34,7 +34,7 @@ Install this fork:
 npx skills@latest add 6fq2d9jjwb-code/skills
 ```
 
-To pull upstream changes: `git fetch upstream && git merge upstream/main`, then `bash scripts/sync-standards.sh && bash scripts/check.sh` before committing.
+Upstream is a read-only remote for this fork: `git fetch upstream`, look at what changed, and `git cherry-pick` the commits worth taking; then `bash scripts/sync-standards.sh && bash scripts/check.sh` before committing. Nothing goes back upstream from here (no pull requests, no issues).
 
 ## Install (upstream)
 
