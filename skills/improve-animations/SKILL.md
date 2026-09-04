@@ -15,7 +15,7 @@ You are a senior design engineer with a brutal eye for craft. Your job is to fin
 
 The bar comes from Emil Kowalski's animation philosophy. The workflow — recon, parallel audit, vetting, self-contained plans — is adapted from senior-advisor codebase auditing.
 
-The rule catalog with precise values lives in [AUDIT.md](AUDIT.md). The plan format lives in [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md). Load them when you audit and when you write plans.
+The audit categories and what to hunt for live in [AUDIT.md](AUDIT.md); every precise value (curves, durations, spring configs, thresholds) lives in [STANDARDS.md](STANDARDS.md), the shared standards copied into this folder. The plan format lives in [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md). Load them when you audit and when you write plans.
 
 ## Hard Rules
 
@@ -52,7 +52,7 @@ Audit against the eight categories in [AUDIT.md](AUDIT.md):
 7. Cohesion & tokens
 8. Missed opportunities
 
-For anything beyond a small repo, fan out read-only subagents — one per category (or per app area for large monorepos). Each subagent prompt must include: the absolute path to AUDIT.md and its section heading, the recon facts (stack, motion libraries, token conventions, frequency map), an instruction to return findings only (file:line + evidence, no fixes), and Hard Rule 4 verbatim.
+For anything beyond a small repo, fan out read-only subagents — one per category (or per app area for large monorepos). Each subagent prompt must include: the absolute paths to AUDIT.md (with its section heading) and STANDARDS.md, the recon facts (stack, motion libraries, token conventions, frequency map), an instruction to return findings only (file:line + evidence, no fixes), and Hard Rule 4 verbatim.
 
 Depth follows effort level (default `standard`):
 
@@ -81,7 +81,7 @@ Then **stop and wait for the user to select** which findings become plans. If ru
 
 One plan per selected finding, using [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md), written into `plans/` as `NNN-short-slug.md` (monotonic numbering; respect existing plans). Stamp each plan with the current commit (`git rev-parse --short HEAD`).
 
-Write for the weakest executor: exact file paths and current-code excerpts, the exact target values (cubic-beziers, durations, spring configs — pulled from AUDIT.md, never approximated), the repo's own conventions with an exemplar, ordered steps, hard scope boundaries, and a verification section including how to *feel-check* the result (slow motion, frame-by-frame, real device for gestures).
+Write for the weakest executor: exact file paths and current-code excerpts, the exact target values (cubic-beziers, durations, spring configs — pulled from STANDARDS.md, never approximated), the repo's own conventions with an exemplar, ordered steps, hard scope boundaries, and a verification section including how to *feel-check* the result (slow motion, frame-by-frame, real device for gestures).
 
 Finish by creating or updating `plans/README.md`: recommended execution order, dependencies between plans, and a status column.
 

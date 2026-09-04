@@ -26,45 +26,61 @@ Every candidate must survive all four questions, in order. Record the answer —
 
 ### 1. Frequency — how often will a user see this?
 
-| Frequency | Verdict |
+<!-- include: frequency -->
+| Frequency | Decision |
 | --- | --- |
-| 100+ times/day (keyboard shortcuts, command palette, core navigation) | **Reject. No animation. Ever.** |
-| Tens of times/day (hover states, list navigation, frequent toggles) | Reject, or suggest only near-imperceptible motion (fast, subtle) |
-| Occasional (modals, drawers, toasts, settings) | Eligible — standard animation |
-| Rare / first-time (onboarding, empty states, success, celebration) | Eligible — this is where the delight budget lives |
+| 100+ times/day (keyboard shortcuts, command palette toggle, tab switches) | **No animation. Ever.** Stop here. |
+| Tens of times/day (hover effects, list navigation, row selection) | Near-imperceptible only: fast and subtle, or nothing |
+| Occasional (modals, drawers, toasts, settings) | Standard animation |
+| Rare / first-time (onboarding, success, celebration) | The delight budget lives here |
 
-Keyboard-initiated actions (command palettes, shortcuts, focus jumps) are a disqualifier, not a judgment call — repeated hundreds of times a day, animation makes them feel slow, delayed, and disconnected. Raycast has no open/close animation; that is the optimal experience.
+**Keyboard-initiated actions are a disqualifier, not a judgment call.** They repeat hundreds of times a day; animation makes them feel slow, delayed, and disconnected. Raycast has no open/close animation, and that is the optimal experience.
+<!-- /include: frequency -->
+
+The first row is a rejection. The second row is eligible only for near-imperceptible motion, and only when the purpose below is feedback.
 
 ### 2. Purpose — why does this animate?
 
-The answer must be one of these, named explicitly:
+<!-- include: purpose -->
+Every animation must answer "why does this animate?" with one of these words:
 
 - **Feedback** — confirming the interface heard the user (press scale, hold-to-confirm fill)
-- **Spatial consistency** — showing where something came from or went (toast enters and exits the same edge; panel grows from its trigger)
+- **Spatial consistency** — showing where something came from or went (a toast enters and exits the same edge; a panel grows from its trigger)
 - **State indication** — making a state change legible (morphing button, expanding accordion)
-- **Preventing a jarring change** — content that teleports, appears, or vanishes with no bridge
-- **Explanation** — motion that demonstrates how a feature works (marketing/onboarding only)
-- **Delight** — allowed *only* at the Rare/first-time frequency tier
+- **Preventing a jarring change** — bridging content that would otherwise teleport
+- **Explanation** — demonstrating how something works (marketing and onboarding only)
+- **Delight** — allowed *only* at the rare / first-time frequency tier
 
-"It looks cool" is not on this list. If you can't name the purpose in one of these words, reject the candidate.
+"It looks cool" is not on the list. Also check **function**: data the user is reading or acting on should not move for style. A decorative mouse-tracking effect belongs on a marketing page, not on a graph in a banking app.
+<!-- /include: purpose -->
+
+If you can't name the purpose in one of these words, reject the candidate.
 
 ### 3. Speed — can it stay inside budget?
 
-The suggestion must work within the standard budgets (UI under 300ms):
+The suggestion must work within the standard budgets:
 
+<!-- include: duration -->
 | Element | Duration |
 | --- | --- |
-| Press feedback | 100–160ms |
+| Button press feedback | 100–160ms |
 | Tooltips, small popovers | 125–200ms |
 | Dropdowns, selects | 150–250ms |
-| Modals, drawers | 200–500ms |
+| Modals | 200–300ms |
+| Drawers, sheets | 200–500ms with `--ease-drawer` (named exception) |
+| Toasts | up to 400ms with `ease` (named exception) |
 | Marketing / explanatory | Can be longer |
+
+**UI animations stay under 300ms.** A 180ms dropdown feels more responsive than a 400ms one. The rule has exactly two named exceptions: drawers and sheets, whose travel distance earns the extra time, and toasts, which Sonner tunes slightly slower and with plain `ease` because that reads as elegant for an uninvited element. Anything else over 300ms on a UI element needs a stated reason.
+
+Perceived speed compounds: a faster spinner makes the same load feel shorter; once one tooltip is open, its neighbours should open instantly (skip the delay *and* the animation); when list items enter and exit, the exit may run about 20% faster than the entry because the user has finished reading.
+<!-- /include: duration -->
 
 If the moment only "works" as a slow, showy animation, it fails the gate.
 
 ### 4. Function — does motion help or hinder here?
 
-Decoration on functional, information-dense UI hinders. A decorative mouse-tracking effect is fine on a marketing page; on a functional graph in a banking app, no animation is better. Data the user is trying to *read* or *act on* should not move for style.
+Decoration on functional, information-dense UI hinders. Data the user is trying to *read* or *act on* should not move for style (the purpose list above says the same; here it is the last gate, applied to the specific surface).
 
 ## Where to Hunt
 
@@ -112,7 +128,7 @@ One row per surviving suggestion, ordered by leverage:
 | 1 | `Toast.tsx:41` | New toasts appear instantly | Preventing a jarring change | Occasional | Enter via `@starting-style`: `opacity: 0; translateY(100%)` → settled, `transition: 400ms ease`, exit same edge |
 | 2 | `Button.tsx:18` | No press feedback | Feedback | Tens/day | `:active { transform: scale(0.97) }`, `transition: transform 160ms ease-out` — subtle enough for the frequency tier |
 
-Every "Suggested motion" cell carries exact values — the curve, the duration, the properties — pulled from this repo's shared vocabulary (`--ease-out: cubic-bezier(0.23, 1, 0.32, 1)`, `--ease-in-out: cubic-bezier(0.77, 0, 0.175, 1)`, `--ease-drawer: cubic-bezier(0.32, 0.72, 0, 1)`), never approximated. Animate `transform` and `opacity` only; include reduced-motion handling (gentler, not zero) and `@media (hover: hover) and (pointer: fine)` gating when the suggestion involves hover.
+Every "Suggested motion" cell carries exact values — the curve, the duration, the properties — pulled from [STANDARDS.md](STANDARDS.md) (`--ease-out`, `--ease-in-out`, `--ease-drawer`, the duration table, the spring configs), never approximated. Animate `transform` and `opacity` only; include reduced-motion handling (gentler, not zero) and `@media (hover: hover) and (pointer: fine)` gating when the suggestion involves hover.
 
 ### Part 2 — Rejected candidates (REQUIRED)
 

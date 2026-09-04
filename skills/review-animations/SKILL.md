@@ -28,7 +28,7 @@ Every animation in the diff is measured against these. A violation is a finding.
 
 4. **Sub-300ms UI.** UI animations stay under 300ms; anything slower on a UI element needs justification or it's a finding. Per-element budgets live in [STANDARDS.md](STANDARDS.md).
 
-5. **Origin & physical correctness.** Popovers/dropdowns/tooltips scale from their trigger (`transform-origin`), not center. Never animate from `scale(0)` — start from `scale(0.9–0.97)` + opacity (Modals are exempt — they stay centered.)
+5. **Origin & physical correctness.** Popovers/dropdowns/tooltips scale from their trigger (`transform-origin`), not center, and they arrive with a transform: a trigger-anchored element that only fades in has no spatial story. Never animate from `scale(0)` — start from `scale(0.9–0.97)` + opacity. Modals are exempt (they stay centered); backdrops, same-spot crossfades and reduced-motion variants may be pure fades.
 
 6. **Interruptibility.** Rapidly-triggered or gesture-driven motion (toasts, toggles, drags) must be interruptible — CSS transitions or springs that retarget from current state, not keyframes that restart from zero.
 
@@ -42,22 +42,31 @@ Every animation in the diff is measured against these. A violation is a finding.
 
 ## Aggressive Escalation Triggers
 
-Flag these on sight, hard:
+Flag every row of this table on sight, hard. It is the shared Never Ship table, so `animate` self-checks against exactly what you block.
 
-- `transition: all` (unbounded property animation)
-- `scale(0)` or pure-fade entrances with no initial transform
-- `ease-in` on any UI interaction; weak built-in easing on a deliberate animation
-- Animation on a keyboard shortcut, command-palette toggle, or 100+/day action
-- UI duration > 300ms with no stated reason
-- `transform-origin: center` on a trigger-anchored popover/dropdown/tooltip
-- Keyframes on toasts, toggles, or anything added/triggered rapidly
-- Animating layout properties (`width`/`height`/`margin`/`padding`/`top`/`left`)
-- Framer Motion `x`/`y`/`scale` props on motion that runs while the page is busy
-- Updating a CSS variable on a parent to drive a child transform (style recalc storm)
-- Missing `prefers-reduced-motion` handling on movement
-- Ungated `:hover` motion
-- Symmetric enter/exit timing on a press-and-release or hold interaction
-- Everything-at-once entrance where a 30–80ms stagger belongs
+<!-- include: never-ship -->
+Each row is an automatic block in `review-animations` and a self-check before `animate` finishes.
+
+| Never | Instead |
+| --- | --- |
+| `transition: all` | Name the exact properties |
+| `transform: scale(0)` entrance | `scale(0.95)` + `opacity: 0` |
+| A trigger-anchored element (popover, dropdown, menu, tooltip) that only fades in | Scale from `0.95–0.97` with `transform-origin` at the trigger; pure fades stay for backdrops, same-spot crossfades and reduced-motion variants |
+| `ease-in` on a UI element | `ease-out` or a strong custom curve |
+| Built-in `ease-out` on a deliberate animation | `cubic-bezier(0.23, 1, 0.32, 1)` |
+| Animation on a keyboard shortcut or 100+/day action | No animation |
+| UI duration over 300ms outside the two named exceptions (drawers/sheets, toasts) with no stated reason | 150–250ms |
+| `transform-origin: center` on a trigger-anchored popover | `var(--transform-origin)` (modals exempt) |
+| Keyframes on toasts, toggles, rapidly-triggered elements | CSS transitions |
+| Animating `width` / `height` / `margin` / `padding` / `top` / `left` outside the sanctioned exceptions | `transform` / `opacity` |
+| Motion `x` / `y` / `scale` props on motion that runs while the page is busy | Full `transform` string |
+| Driving a child's transform through a CSS variable on the parent | `transform` on the element itself |
+| Ungated `:hover` motion | `@media (hover: hover) and (pointer: fine)` |
+| Missing `prefers-reduced-motion` handling on movement | Gentler variant, not zero |
+| Symmetric timing on a hold or press-and-release interaction | Slow the deliberate phase, snap the release |
+| Everything entering at once where a group entrance belongs | 30–80ms stagger |
+| Bounce on an element that arrived without momentum (a menu, a tooltip) | No bounce; reserve it for drag-to-dismiss and playful moments |
+<!-- /include: never-ship -->
 
 ## Remedial Preference Hierarchy
 
@@ -101,7 +110,7 @@ Group remaining commentary by impact tier, highest first. Omit empty tiers.
 
 Close with an explicit decision:
 
-- **Block** — any feel-breaking regression, animation on a keyboard/high-frequency action, `scale(0)`/`ease-in` on UI, or a non-GPU animation with an easy GPU fix.
+- **Block** — any feel-breaking regression, animation on a keyboard/high-frequency action, `scale(0)`/`ease-in` on UI, a UI duration over 300ms outside the two named exceptions (drawers/sheets, toasts) with no stated reason, or a non-GPU animation with an easy GPU fix.
 - **Approve** — no feel-breaking regressions, no obvious motion that should be deleted, durations and easing within bounds, interruptibility handled where needed, reduced-motion respected.
 
 Be specific and cite `file:line`. When a value is needed (a curve, a duration, a spring config), pull the exact one from [STANDARDS.md](STANDARDS.md) rather than approximating.
