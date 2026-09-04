@@ -14,6 +14,7 @@ A lookup skill. When invoked with a task ("I need toasts", "what should I use fo
 2. **Check what's already installed.** Look at `package.json` first. If the project already uses a listed library, use it. If it uses a competitor (e.g. react-window instead of Virtuoso), flag the recommendation but don't churn the dependency without being asked.
 3. **Recommend one library**, state what it's for in one sentence, and install/wire it up if that's part of the request. Don't present a menu of options when the list has a clear answer.
 4. If the task isn't covered by the list, say so explicitly and recommend from your own knowledge — but be clear you've left the curated list.
+5. **Check maintenance before installing.** The list was curated in August 2026. Before adding a dependency, confirm the package has had a release or commit within the last year and carries no "unmaintained" notice (`npm view <pkg> time.modified`, the repo's commit log). If it has gone stale, say so and pick the nearest maintained alternative rather than installing it anyway.
 
 ## The list
 

@@ -50,7 +50,7 @@ Three conventions, explained once here instead of in every recipe:
 - **`scheduleOnRN(fn, ...args)` replaces the deprecated `runOnJS(fn)(...args)`** for calling back to the React Native runtime from a worklet.
 - **Gestures are wrapped in `useMemo`.** Rebuilding a gesture on every render can reattach the recognizer and drop a drag that's mid-flight.
 
-**Gesture Handler v3:** Expo installs v2, and the recipes use its `Gesture.Pan()` builder. If the project is already on v3, the builder is legacy — each gesture is a hook taking one config object, with `onStart` → `onActivate`, `onEnd` → `onDeactivate`, and the `success` flag replaced by `event.canceled` (inverted). The hook manages its own identity, so drop the `useMemo`:
+**Gesture Handler major:** check `package.json` first. The recipes use the v2 `Gesture.Pan()` builder. On v3 the builder is legacy — each gesture is a hook taking one config object, with `onStart` → `onActivate`, `onEnd` → `onDeactivate`, and the `success` flag replaced by `event.canceled` (inverted). The hook manages its own identity, so drop the `useMemo`:
 
 ```jsx
 const pan = usePanGesture({
@@ -355,7 +355,7 @@ const TOAST_EXIT = FadeOutDown.duration(250).easing(EASE_OUT);
 />
 ```
 
-- **The 300ms cap holds here too.** A toast isn't an exception — it's uninvited, so if anything it should be quicker and quieter than motion the user asked for.
+- **Toasts are the one named overrun of the 300ms budget** (up to 400ms, plain `ease`, per the shared standards). This recipe stays at 300/250 because a native toast sits over the platform's own motion and shouldn't outlast it; anything up to 400 is fine, slower is not.
 - **It exits the way it entered.** Entering from the bottom and leaving to the side reads as two unrelated elements.
 - **Exit ~20% faster than entry.** The user has finished reading; the arrival deserves the time, the departure doesn't.
 - **Safe area insets, always.** A toast at `bottom: 16` sits under the home indicator on every modern iPhone.

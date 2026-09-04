@@ -63,7 +63,7 @@ Walk down; stop at the first that fits.
 | Anything a finger touches, or anything derived from scroll | **`useSharedValue` + `Gesture` + `useAnimatedStyle`** |
 | Screen to screen | **Native stack options in Expo Router.** Never hand-roll this |
 | A bottom sheet that is its own screen | **`presentation: 'formSheet'`** — it's a real UISheetPresentationController, free and correct |
-| Tab bar | **`NativeTabs`** (from `expo-router/unstable-native-tabs`) — the platform's real tab bar, its behaviors and transitions included |
+| Tab bar | **`NativeTabs`** (from `expo-router/unstable-native-tabs` in SDK 54; check the installed SDK for the current path) — the platform's real tab bar, its behaviors and transitions included |
 | Context menu, press-and-hold preview | **`Link.Menu` / `Link.Preview`** (Expo Router, iOS-only) — native menus and peek, never rebuilt in JS |
 | Header that collapses into a large title | **`headerLargeTitleEnabled`** on the native stack (iOS-only; `headerLargeTitle` is deprecated) — not a scroll worklet |
 | Pull to refresh | **`RefreshControl`** — hand-roll only when it's a signature interaction (see the threshold recipe) |
@@ -194,6 +194,15 @@ withSpring(0, { duration: 300, dampingRatio: 0.8, reduceMotion: ReduceMotion.Sys
 Reduced motion means **fewer and gentler**, not zero: keep opacity and color changes that explain a state change, drop translation, scale, parallax and overshoot. Screen transitions become `animation: 'fade'`.
 
 **Text scales.** `allowFontScaling` is on by default, so any height you measured at default type size is wrong at 200%. Never animate to a hardcoded height — measure with `onLayout`, or animate a transform instead.
+
+## Detect the stack first
+
+Read `package.json` before writing a line, and let the installed versions pick the API:
+
+- **Expo SDK** (`expo`): the Router features below are tied to it. Native tabs shipped as `expo-router/unstable-native-tabs` in SDK 54; the import path drops `unstable-` once it stabilizes, so follow the installed SDK's docs rather than this file.
+- **`react-native-reanimated` major**: the CSS transitions/animations API, `.get()` / `.set()`, and `scheduleOnRN` (from `react-native-worklets`) are Reanimated 4. On 3.x, use `withTiming`/`withSpring` on shared values for everything and `runOnJS` for the callback.
+- **`react-native-gesture-handler` major**: v2 is the `Gesture.Pan()` builder the recipes use; v3 is hooks (`usePanGesture`), see the note at the top of RECIPES.md.
+- **New Architecture** on or off: Reanimated 4 requires it.
 
 ## Setup that silently breaks motion
 
