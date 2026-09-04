@@ -20,7 +20,23 @@ You can stay up to date with my skills here:
 
 [Sign Up To The Newsletter](https://animations.dev/skills)
 
-## Install
+## About this fork
+
+Maintained fork of [emilkowalski/skills](https://github.com/emilkowalski/skills). Same twelve skills, same philosophy, with the rules kept in one place and a few things fixed. What changed, by tier, is in [CHANGELOG.md](CHANGELOG.md).
+
+- `shared/STANDARDS.md` is the single source of truth for every value (frequency gate, easing tokens, duration table, springs, performance, accessibility, the Never Ship table). `scripts/sync-standards.sh` copies it into the skills that use it and refreshes the included blocks inside their SKILL.md files; `scripts/check.sh` fails CI when a copy drifts, a link breaks, or a SKILL.md outgrows 500 lines. Edit the shared file, run the script, commit both.
+- Version-sensitive advice (Swift 6.4 features, Reanimated 4, Gesture Handler v3, Expo Router native tabs) tells the agent to detect the installed toolchain first instead of trusting a date.
+- `animation-vocabulary` accepts Chinese descriptions as well as English.
+
+Install this fork:
+
+```bash
+npx skills@latest add 6fq2d9jjwb-code/skills
+```
+
+To pull upstream changes: `git fetch upstream && git merge upstream/main`, then `bash scripts/sync-standards.sh && bash scripts/check.sh` before committing.
+
+## Install (upstream)
 
 ```bash
 npx skills@latest add emilkowalski/skills
